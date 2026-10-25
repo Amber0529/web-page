@@ -148,7 +148,6 @@
   .legend .item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);}
   .swatch{width:14px;height:14px;border:2px solid var(--line);box-shadow:2px 2px 0 #B99C74;}
 
-  /* 日历：放宽到约 700px，标题与按钮不贴边 */
   .cal-wrap{max-width:700px;margin:0 auto;}
   .cal-head{
     display:flex;align-items:center;justify-content:space-between;
@@ -239,7 +238,6 @@
   .collapsible{margin-top:12px;display:none;}
   .collapsible.open{display:block;}
 
-  .ratio{margin-top:6px;}
   .bar-row{display:grid;grid-template-columns:64px 1fr 64px;gap:10px;align-items:center;margin-bottom:9px;font-size:12px;}
   .bar-row .cat{color:var(--ink-soft);}
   .bar-track{background:#FFFBF2;border:2px solid var(--line);height:18px;position:relative;box-shadow:2px 2px 0 #B99C74;}
@@ -371,7 +369,6 @@
     </div>
   </section>
 
-  <!-- 分类占比：可收起 -->
   <section class="panel light">
     <div class="section-head">
       <h2>本月分类占比</h2>
@@ -382,7 +379,6 @@
     <div class="collapsible" id="ratio"></div>
   </section>
 
-  <!-- 账目列表：可收起，切换按钮在标题行 -->
   <section class="panel light">
     <div class="section-head">
       <h2 id="listTitle">本月账目</h2>
@@ -396,7 +392,6 @@
     </div>
   </section>
 
-  <!-- 数据备份：可收起 -->
   <section class="panel light">
     <div class="section-head">
       <h2>数据备份</h2>
@@ -435,15 +430,15 @@
     { key:"other",   name:"其他", color:"#F2D98C" },
   ];
   const CAT_MAP = Object.fromEntries(CATEGORIES.map(function(c){ return [c.key,c]; }));
-  const STORAGE_KEY = "pixel_ledger_v4";
+  const STORAGE_KEY = "pixel_ledger_v5";
 
   /* =========================================================
-     像素小场景：21 列 × 15 行，整体偏明亮
+     9 幅像素小场景：21 列 × 15 行，明亮清新色调
      一个日历格 = 3×3 像素
      ========================================================= */
   const SCENES = [
-    { // 海浪岛屿（明亮）
-      name:"海浪岛屿",
+    // 1. 海浪岛屿
+    { name:"海浪岛屿",
       palette:["#5FB4E8","#8FD4F2","#C8ECF8","#F7E6B8","#9FD98A","#F2D36A","#7FC47F","#FFFFFF"],
       rows:[
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
@@ -463,8 +458,8 @@
         "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
       ]
     },
-    { // 小猫钓鱼（重画：耳朵、尾巴、鱼竿鱼线更清楚）
-      name:"小猫钓鱼",
+    // 2. 小猫钓鱼
+    { name:"小猫钓鱼",
       palette:["#F7D77A","#F2C14E","#7FD4F0","#C8ECF8","#FFF6E2","#F2A0C0","#9FD98A","#5FA8D8"],
       rows:[
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
@@ -484,8 +479,8 @@
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
       ]
     },
-    { // 雪山（明亮）
-      name:"雪山",
+    // 3. 雪山
+    { name:"雪山",
       palette:["#8FC4E8","#B7DCF2","#E0F0FA","#FFFFFF","#D8ECF8","#F4FAFF","#9FD98A","#7A8FA8"],
       rows:[
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
@@ -505,8 +500,8 @@
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
       ]
     },
-    { // 小屋炊烟（重画：门窗、烟囱、炊烟更清楚）
-      name:"小屋炊烟",
+    // 4. 小屋炊烟
+    { name:"小屋炊烟",
       palette:["#A8E08A","#7FC47F","#F2D36A","#FFF6E2","#F2A0A0","#C9B8E0","#C8ECF8","#B99C74"],
       rows:[
         "6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6",
@@ -526,25 +521,109 @@
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
       ]
     },
-    { // 月夜森林（提亮：中亮蓝 + 明亮绿）
-      name:"月夜森林",
-      palette:["#6FA8D8","#8FC4E8","#FFF0B8","#B7DCF2","#A8E08A","#7FC47F","#C8ECF8","#FFFFFF"],
+    // 5. 热气球
+    { name:"热气球",
+      palette:["#7FD4F0","#C8ECF8","#F58B6B","#F2C14E","#FFF6E2","#F2A0C0","#9FD98A","#5FA8D8"],
+      rows:[
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 2 2 3 3 3 3 3 2 2 1 1 1 1 1 1 1 1",
+        "1 1 1 2 3 3 4 4 4 4 4 3 3 2 1 1 1 1 1 1 1",
+        "1 1 1 2 3 4 4 4 4 4 4 4 3 2 1 1 1 1 1 1 1",
+        "1 1 1 2 3 4 4 4 4 4 4 4 3 2 1 1 1 1 1 1 1",
+        "1 1 1 2 3 3 4 4 4 4 4 3 3 2 1 1 1 1 1 1 1",
+        "1 1 1 1 2 2 3 3 3 3 3 2 2 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 5 5 5 5 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 6 6 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 6 6 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+      ]
+    },
+    // 6. 沙漠仙人掌
+    { name:"沙漠仙人掌",
+      palette:["#F7D77A","#F2C14E","#E8A93C","#9FD98A","#7FC47F","#5FB4E8","#FFF6E2","#F2A0A0"],
+      rows:[
+        "5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5",
+        "5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 3 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 3 3 3 3 1 1 1 1 1 3 3 1 1 1 1 1 1",
+        "1 1 1 3 3 3 3 3 1 1 1 1 3 3 3 1 1 1 1 1 1",
+        "1 1 1 3 3 3 3 3 1 1 1 3 3 3 3 3 1 1 1 1 1",
+        "1 1 1 1 3 3 3 3 1 1 1 3 3 3 3 3 1 1 1 1 1",
+        "1 1 1 1 3 3 3 3 1 1 1 1 3 3 3 1 1 1 1 1 1",
+        "1 1 1 1 3 3 3 3 3 3 3 3 3 3 3 3 3 1 1 1 1",
+        "1 1 1 1 1 3 3 3 3 3 3 3 3 3 3 3 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+      ]
+    },
+    // 7. 田野风车
+    { name:"田野风车",
+      palette:["#7FD4F0","#C8ECF8","#FFFFFF","#9FD98A","#7FC47F","#F2D36A","#B99C74","#F58B6B"],
       rows:[
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
-        "0 0 0 0 0 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0",
-        "0 0 0 0 2 2 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0",
-        "0 0 0 0 2 2 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0",
-        "0 0 0 0 0 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0",
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
-        "0 0 0 5 0 0 0 0 0 5 0 0 0 0 0 5 0 0 0 0 0",
-        "0 0 5 4 5 0 0 0 5 4 5 0 0 0 5 4 5 0 0 0 0",
-        "0 5 4 4 4 5 0 5 4 4 4 5 0 5 4 4 4 5 0 0 0",
-        "5 4 4 4 4 4 5 4 4 4 4 4 5 4 4 4 4 4 5 0 0",
-        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 5 0",
-        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 5",
+        "0 0 0 0 0 0 0 0 2 2 2 2 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 2 2 2 2 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 2 2 2 2 0 0 0 0 0 0 0 0 0",
+        "3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3",
+        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4",
+        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4"
+      ]
+    },
+    // 8. 云端飞鸟
+    { name:"云端飞鸟",
+      palette:["#7FD4F0","#A8DCF0","#C8ECF8","#FFFFFF","#F7E6B8","#5FA8D8","#8FD4F2","#E8F4FA"],
+      rows:[
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 3 3 3 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 3 3 3 3 3 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 3 3 3 1 1 1 1 1 1 3 3 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 3 3 3 3 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 3 1 1 1 1 1",
+        "1 1 1 1 1 1 1 3 3 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 3 3 3 3 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 3 3 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+        "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+      ]
+    },
+    // 9. 草原羊群
+    { name:"草原羊群",
+      palette:["#7FD4F0","#A8DCF0","#C8ECF8","#FFFFFF","#9FD98A","#7FC47F","#F7E6B8","#E8F4FA"],
+      rows:[
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+        "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2",
+        "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2",
+        "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2",
+        "3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3",
+        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4",
+        "4 4 4 4 4 5 5 5 4 4 4 4 4 4 4 5 5 4 4 4 4",
+        "4 4 4 4 5 5 5 5 5 4 4 4 4 4 5 5 5 5 4 4 4",
+        "4 4 4 4 4 5 5 5 4 4 4 4 4 4 4 5 5 4 4 4 4",
+        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4",
+        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4",
+        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4",
+        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4",
+        "4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4"
       ]
     }
   ];
@@ -562,6 +641,7 @@
   function load(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY)
+        || localStorage.getItem("pixel_ledger_v4")
         || localStorage.getItem("pixel_ledger_v3")
         || localStorage.getItem("pixel_ledger_v2")
         || localStorage.getItem("pixel_ledger_v1");
@@ -802,7 +882,6 @@
       daysEl.appendChild(cell);
     }
 
-    // 标记视图模式
     Array.prototype.forEach.call(daysEl.children, function(cell){
       if(cell.classList.contains("empty")) return;
       if(viewMode === "art") cell.classList.add("art");
@@ -857,7 +936,6 @@
     sumLit.textContent   = litCount + "/" + totalCells;
   }
 
-  /* 列表 */
   const listEl   = document.getElementById("list");
   const listTitle = document.getElementById("listTitle");
   const scopeBtn = document.getElementById("scopeBtn");
@@ -938,7 +1016,6 @@
     });
   }
 
-  /* 占比 */
   const ratioBtn = document.getElementById("ratioBtn");
   const ratioEl  = document.getElementById("ratio");
 
@@ -999,7 +1076,6 @@
     });
   }
 
-  /* 备份 */
   const backupBtn = document.getElementById("backupBtn");
   const backupWrap = document.getElementById("backupWrap");
   backupBtn.addEventListener("click", function(){
@@ -1008,7 +1084,6 @@
     backupBtn.textContent = backupOpen ? "收 起" : "展 开";
   });
 
-  /* 删除 + 撤销 */
   const toast     = document.getElementById("toast");
   const toastText = document.getElementById("toastText");
   const undoBtn   = document.getElementById("undoBtn");
@@ -1043,7 +1118,6 @@
     render();
   });
 
-  /* 月份切换 */
   document.getElementById("prevBtn").addEventListener("click", function(){
     viewMonth--;
     if(viewMonth < 0){ viewMonth = 11; viewYear--; }
@@ -1055,7 +1129,6 @@
     render();
   });
 
-  /* 导出 / 导入 */
   document.getElementById("exportJson").addEventListener("click", function(){
     const t = new Date();
     const blob = new Blob([JSON.stringify(entries, null, 2)], {type:"application/json"});
