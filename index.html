@@ -704,4 +704,281 @@
       mark.textContent = "✦";
       mark.style.fontSize = "10px";
       mark.style.opacity = ".6";
-      cell.appendChild(mark
+      cell.appendChild(mark);
+      daysEl.appendChild(cell);
+    }
+  }
+
+  /* ---------- 统计 & 列表 ---------- */
+  const sumTotal = document.getElementById("sumTotal");
+  const sumDays  = document.getElementById("sumDays");
+  const sumLit   = document.getElementById("sumLit");
+  const listEl   = document.getElementById("list");
+  const listTitle = document.getElementById("listTitle");
+  const scopeBtn = document.getElementById("scopeBtn");
+
+  scopeBtn.addEventListener("click", function(){
+    listScope = listScope === "month" ? "all" : "month";
+    render();
+  });
+
+  function renderStats(){
+    const month = viewMonth + 1;
+    const mk = monthKey(viewYear, month);
+    const monthEntries = entries.filter(e=>e.date.startsWith(mk));
+
+    let total = 0;
+    const daySet = {};
+    monthEntries.forEach(e=>{
+      total += e.amount;
+      daySet[e.date] = true;
+    });
+
+    sumTotal.textContent = fmtMoney(total);
+    sumDays.textContent  = String(Object.keys(daySet).length);
+    sumLit.textContent   = String(Object.keys(daySet).length);
+  }
+
+  function renderList(){
+    const month = viewMonth + 1;
+    const mk = monthKey(viewYear, month);
+    let list = entries.slice();
+    if(listScope === "month"){
+      list = list.filter(e=>e.date.startsWith(mk));
+      listTitle.textContent = "本月账目";
+      scopeBtn.textContent = "查 看 全 部";
+    }else{
+      listTitle.textContent = "全部账目";
+      scopeBtn.textContent = "只 看 本 月";
+    }
+    list.sort((a,b)=> a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+
+    listEl.innerHTML = "";
+    if(list.length === 0){
+      const tip = document.createElement("div");
+      tip.className = "empty-tip";
+      tip.textContent = listScope === "month"
+        ? "本月还没有账目，记下第一笔点亮格子吧 ✦"
+        : "还没有任何账目记录 ✦";
+      listEl.appendChild(tip);
+      return;
+    }
+
+    list.forEach(e=>{
+      const cat = CAT_MAP[e.category] || CAT_MAP.other;
+      const row = document.createElement("div");
+      row.className = "row";
+
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = cat.name;
+      tag.style.background = cat.color;
+
+      const note = document.createElement("span");
+      note.className = "note";
+      note.textContent = e.note || "—";
+
+      const date = document.createElement("span");
+      date.className = "date";
+      date.textContent = e.date;
+
+      const money = document.createElement("span");
+      money.className = "money";
+      money.textContent = fmtMoney(e.amount);
+
+      const del = document.createElement("button");
+      del.className = "del";
+      del.type = "button";
+      del.title = "删除这条记录";
+      del.textContent = "×";
+      del.addEventListener("click", ()=> removeEntry(e));
+
+      row.appendChild(tag);
+      row.appendChild(note);
+      row.appendChild(date);
+      row.appendChild(money);
+      row.appendChild(del);
+      listEl.appendChild(row);
+    });
+  }
+
+  /* ---------- 分类占比 ---------- */
+  const ratioBtn = document.getElementById("ratioBtn");
+  const ratioEl  = document.getElementById("ratio");
+
+  ratioBtn.addEventListener("click", function(){
+    ratioOpen = !ratioOpen;
+    ratioEl.classList.toggle("open", ratioOpen);
+    ratioBtn.textContent = ratioOpen ? "收 起" : "展 开";
+    if(ratioOpen) renderRatio();
+  });
+
+  function renderRatio(){
+    const month = viewMonth + 1;
+    const mk = monthKey(viewYear, month);
+    const sums = {};
+    let total = 0;
+    entries.forEach(e=>{
+      if(!e.date.startsWith(mk)) return;
+      sums[e.category] = (sums[e.category] || 0) + e.amount;
+      total += e.amount;
+    });
+
+    ratioEl.innerHTML = "";
+    if(total <= 0){
+      const tip = document.createElement("div");
+      tip.className = "empty-tip";
+      tip.textContent = "本月还没有支出，暂无占比数据。";
+      ratioEl.appendChild(tip);
+      return;
+    }
+
+    CATEGORIES.forEach(c=>{
+      const val = sums[c.key] || 0;
+      if(val <= 0) return;
+      const pct = Math.round(val / total * 100);
+      const row = document.createElement("div");
+      row.className = "bar-row";
+
+      const name = document.createElement("span");
+      name.className = "cat";
+      name.textContent = c.name;
+
+      const track = document.createElement("div");
+      track.className = "bar-track";
+      const fill = document.createElement("div");
+      fill.className = "bar-fill";
+      fill.style.width = Math.max(4, pct) + "%";
+      fill.style.background = c.color;
+      track.appendChild(fill);
+
+      const v = document.createElement("span");
+      v.className = "val";
+      v.textContent = pct + "%";
+
+      row.appendChild(name);
+      row.appendChild(track);
+      row.appendChild(v);
+      ratioEl.appendChild(row);
+    });
+  }
+
+  /* ---------- 删除 + 撤销 ---------- */
+  const toast    = document.getElementById("toast");
+  const toastText = document.getElementById("toastText");
+  const undoBtn  = document.getElementById("undoBtn");
+  let undoTimer  = null;
+
+  function removeEntry(entry){
+    const idx = entries.findIndex(x=>x.id === entry.id);
+    if(idx < 0) return;
+    entries.splice(idx,1);
+    save();
+    render();
+
+    pendingUndo = { entry, idx };
+    toastText.textContent = `已删除 ${CAT_MAP[entry.category] ? CAT_MAP[entry.category].name : ""} ${fmtMoney(entry.amount)}`;
+    toast.classList.add("show");
+
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(()=>{
+      toast.classList.remove("show");
+      pendingUndo = null;
+    }, 5000);
+  }
+
+  undoBtn.addEventListener("click", function(){
+    if(!pendingUndo) return;
+    const { entry, idx } = pendingUndo;
+    entries.splice(Math.min(idx, entries.length), 0, entry);
+    save();
+    pendingUndo = null;
+    toast.classList.remove("show");
+    clearTimeout(undoTimer);
+    render();
+  });
+
+  /* ---------- 月份切换 ---------- */
+  document.getElementById("prevBtn").addEventListener("click", function(){
+    viewMonth--;
+    if(viewMonth < 0){ viewMonth = 11; viewYear--; }
+    render();
+  });
+  document.getElementById("nextBtn").addEventListener("click", function(){
+    viewMonth++;
+    if(viewMonth > 11){ viewMonth = 0; viewYear++; }
+    render();
+  });
+
+  /* ---------- 备份 ---------- */
+  document.getElementById("exportJson").addEventListener("click", function(){
+    const blob = new Blob([JSON.stringify(entries, null, 2)], {type:"application/json"});
+    downloadBlob(blob, `pixel-ledger-${ymd(today.getFullYear(), today.getMonth()+1, today.getDate())}.json`);
+  });
+
+  document.getElementById("exportCsv").addEventListener("click", function(){
+    const rows = [["日期","分类","金额","备注"]];
+    entries.slice().sort((a,b)=> a.date < b.date ? -1 : 1).forEach(e=>{
+      const cat = CAT_MAP[e.category] ? CAT_MAP[e.category].name : e.category;
+      rows.push([e.date, cat, e.amount, (e.note||"").replace(/"/g,'""')]);
+    });
+    const csv = rows.map(r=> r.map(v=> `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+    const blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8"});
+    downloadBlob(blob, `pixel-ledger-${ymd(today.getFullYear(), today.getMonth()+1, today.getDate())}.csv`);
+  });
+
+  const fileInput = document.getElementById("fileInput");
+  document.getElementById("importJson").addEventListener("click", function(){
+    fileInput.click();
+  });
+  fileInput.addEventListener("change", function(){
+    const file = fileInput.files && fileInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        const arr = JSON.parse(String(reader.result));
+        if(!Array.isArray(arr)) throw new Error("格式错误");
+        const clean = arr.filter(e=>e && typeof e.amount === "number" && e.amount > 0 && typeof e.date === "string");
+        if(clean.length === 0){ alert("没有可导入的有效记录。"); return; }
+        if(!confirm(`将导入 ${clean.length} 条记录，并与现有数据合并。继续？`)) return;
+        const existingIds = new Set(entries.map(e=>e.id));
+        clean.forEach(e=>{
+          if(!e.id || existingIds.has(e.id)) e.id = uid();
+          if(!CAT_MAP[e.category]) e.category = "other";
+          entries.push(e);
+        });
+        save();
+        render();
+        alert("导入完成。");
+      }catch(err){
+        alert("导入失败：文件不是有效的 JSON 数据。");
+      }finally{
+        fileInput.value = "";
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  });
+
+  function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+  }
+
+  /* ---------- 汇总渲染 ---------- */
+  function render(flash, flashDate){
+    renderCalendar(flash ? flashDate : null);
+    renderStats();
+    renderList();
+    if(ratioOpen) renderRatio();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
