@@ -26,7 +26,7 @@
     --cloth:#F2B6C1;
     --traffic:#A8C6D8;
     --daily:#B8D9C0;
-    --other:#D8CFC4;
+    --other:#F2D98C;
     --shadow: 4px 4px 0 #B99C74;
     --shadow-sm: 3px 3px 0 #B99C74;
   }
@@ -148,9 +148,13 @@
   .legend .item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);}
   .swatch{width:14px;height:14px;border:2px solid var(--line);box-shadow:2px 2px 0 #B99C74;}
 
-  /* 日历：收窄居中，标题加大 */
-  .cal-wrap{max-width:600px;margin:0 auto;}
-  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+  /* 日历：放宽到约 700px，标题与按钮不贴边 */
+  .cal-wrap{max-width:700px;margin:0 auto;}
+  .cal-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:14px;gap:10px;flex-wrap:wrap;
+    padding:0 6px;
+  }
   .cal-head h2{
     font-family:'Press Start 2P', monospace;
     font-size:clamp(13px,2.6vw,17px);
@@ -160,9 +164,9 @@
     line-height:1.5;
   }
   .cal-tools{display:flex;gap:8px;flex-wrap:wrap;}
-  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;}
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px;}
   .week div{text-align:center;font-size:10px;color:var(--muted);letter-spacing:1px;}
-  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;}
 
   .day{
     aspect-ratio:1/1;
@@ -179,7 +183,7 @@
     display:grid;
     grid-template-columns:repeat(3,1fr);
     grid-template-rows:repeat(3,1fr);
-    opacity:.12;
+    opacity:.09;
     transition:opacity .45s ease;
     pointer-events:none;
   }
@@ -202,13 +206,12 @@
     100%{filter:brightness(1);transform:scale(1);}
   }
   .day.catmode .pixgrid{display:none;}
-  .day.catmode .catfill{position:absolute;inset:0;}
-  .day .catfill{display:none;}
-  .day.catmode .catfill{display:block;}
+  .day.catmode .catfill{position:absolute;inset:0;display:block;}
   .day.catmode .label{opacity:1;}
+  .day .catfill{display:none;}
   .day .catamt{
-    position:absolute;bottom:2px;left:0;right:0;
-    text-align:center;font-size:8px;line-height:1;
+    position:absolute;bottom:3px;left:0;right:0;
+    text-align:center;font-size:10px;line-height:1;
   }
 
   .puzzle-done{
@@ -225,15 +228,18 @@
   }
   @keyframes pop{from{transform:scale(.94);}to{transform:scale(1);}}
 
-  .section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:0;}
   .section-head h2{
     font-family:'Press Start 2P', monospace;
     font-size:11px;color:var(--accent-2);
     text-shadow:1px 1px 0 rgba(74,55,40,.16);
     margin:0;letter-spacing:1px;
   }
-  .ratio{display:none;margin-top:6px;}
-  .ratio.open{display:block;}
+  .section-head .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .collapsible{margin-top:12px;display:none;}
+  .collapsible.open{display:block;}
+
+  .ratio{margin-top:6px;}
   .bar-row{display:grid;grid-template-columns:64px 1fr 64px;gap:10px;align-items:center;margin-bottom:9px;font-size:12px;}
   .bar-row .cat{color:var(--ink-soft);}
   .bar-track{background:#FFFBF2;border:2px solid var(--line);height:18px;position:relative;box-shadow:2px 2px 0 #B99C74;}
@@ -304,6 +310,7 @@
     .row .del{position:absolute;right:8px;top:6px;}
     .bar-row{grid-template-columns:52px 1fr 54px;}
     .cal-wrap{max-width:100%;}
+    .cal-head{padding:0;}
   }
 </style>
 </head>
@@ -364,31 +371,48 @@
     </div>
   </section>
 
+  <!-- 分类占比：可收起 -->
   <section class="panel light">
     <div class="section-head">
       <h2>本月分类占比</h2>
-      <button class="btn ghost small" id="ratioBtn" type="button">展 开</button>
+      <div class="tools">
+        <button class="btn ghost small" id="ratioBtn" type="button">展 开</button>
+      </div>
     </div>
-    <div class="ratio" id="ratio"></div>
+    <div class="collapsible" id="ratio"></div>
   </section>
 
+  <!-- 账目列表：可收起，切换按钮在标题行 -->
   <section class="panel light">
     <div class="section-head">
       <h2 id="listTitle">本月账目</h2>
-      <button class="btn ghost small" id="scopeBtn" type="button">查 看 全 部</button>
+      <div class="tools">
+        <button class="btn ghost small" id="scopeBtn" type="button">查 看 全 部</button>
+        <button class="btn ghost small" id="listToggle" type="button">展 开</button>
+      </div>
     </div>
-    <div class="list" id="list"></div>
+    <div class="collapsible" id="listWrap">
+      <div class="list" id="list"></div>
+    </div>
   </section>
 
+  <!-- 数据备份：可收起 -->
   <section class="panel light">
-    <div class="section-head"><h2>数据备份</h2></div>
-    <div class="backup">
-      <button class="btn ghost small" id="exportJson" type="button">导出 JSON</button>
-      <button class="btn ghost small" id="importJson" type="button">导入 JSON</button>
-      <button class="btn ghost small" id="exportCsv" type="button">导出 CSV</button>
-      <span class="hint">数据保存在本机浏览器，换设备请用导出/导入。</span>
+    <div class="section-head">
+      <h2>数据备份</h2>
+      <div class="tools">
+        <button class="btn ghost small" id="backupBtn" type="button">展 开</button>
+      </div>
     </div>
-    <input type="file" id="fileInput" accept="application/json,.json" style="display:none" />
+    <div class="collapsible" id="backupWrap">
+      <div class="backup" style="margin-top:12px;">
+        <button class="btn ghost small" id="exportJson" type="button">导出 JSON</button>
+        <button class="btn ghost small" id="importJson" type="button">导入 JSON</button>
+        <button class="btn ghost small" id="exportCsv" type="button">导出 CSV</button>
+        <span class="hint">数据保存在本机浏览器，换设备请用导出/导入。</span>
+      </div>
+      <input type="file" id="fileInput" accept="application/json,.json" style="display:none" />
+    </div>
   </section>
 
 </div>
@@ -408,20 +432,19 @@
     { key:"cloth",   name:"服饰", color:"#F2B6C1" },
     { key:"traffic", name:"交通", color:"#A8C6D8" },
     { key:"daily",   name:"日用", color:"#B8D9C0" },
-    { key:"other",   name:"其他", color:"#D8CFC4" },
+    { key:"other",   name:"其他", color:"#F2D98C" },
   ];
   const CAT_MAP = Object.fromEntries(CATEGORIES.map(function(c){ return [c.key,c]; }));
-  const STORAGE_KEY = "pixel_ledger_v3";
+  const STORAGE_KEY = "pixel_ledger_v4";
 
   /* =========================================================
-     像素小场景：每幅画 21 列 × 15 行
-     一个日历格 = 画作中的 3×3 像素
-     字符 → 调色板索引；" " 表示透明/留空
+     像素小场景：21 列 × 15 行，整体偏明亮
+     一个日历格 = 3×3 像素
      ========================================================= */
   const SCENES = [
-    { // 海浪岛屿
+    { // 海浪岛屿（明亮）
       name:"海浪岛屿",
-      palette:["#2E6FA8","#4FA3D8","#A8DCF0","#F2E2B8","#7FB069","#E8C15A","#5A8F5A","#FFFFFF"],
+      palette:["#5FB4E8","#8FD4F2","#C8ECF8","#F7E6B8","#9FD98A","#F2D36A","#7FC47F","#FFFFFF"],
       rows:[
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
@@ -440,9 +463,9 @@
         "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
       ]
     },
-    { // 小猫钓鱼
+    { // 小猫钓鱼（重画：耳朵、尾巴、鱼竿鱼线更清楚）
       name:"小猫钓鱼",
-      palette:["#F2C14E","#E8A93C","#4FA3D8","#A8DCF0","#F7EAD3","#B565A7","#5A8F5A","#3E5C8A"],
+      palette:["#F7D77A","#F2C14E","#7FD4F0","#C8ECF8","#FFF6E2","#F2A0C0","#9FD98A","#5FA8D8"],
       rows:[
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
@@ -451,19 +474,19 @@
         "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2",
         "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2",
         "3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3",
-        "3 3 3 3 3 4 4 3 3 3 3 3 3 3 3 3 3 3 3 3 3",
-        "3 3 3 3 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3 3 3",
-        "3 3 3 3 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3 3 3",
-        "3 3 3 3 3 4 4 3 3 3 3 3 3 3 3 3 3 3 3 3 3",
+        "3 3 3 3 3 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3",
+        "3 3 3 3 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3",
+        "3 3 3 4 4 5 4 4 4 4 5 4 4 3 3 3 3 3 3 3 3",
+        "3 3 3 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3",
         "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2",
         "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2",
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
       ]
     },
-    { // 雪山
+    { // 雪山（明亮）
       name:"雪山",
-      palette:["#3E5C8A","#7C9BB5","#B7C9D6","#FFFFFF","#A8C6D8","#E8F0F8","#5A8F5A","#4A3728"],
+      palette:["#8FC4E8","#B7DCF2","#E0F0FA","#FFFFFF","#D8ECF8","#F4FAFF","#9FD98A","#7A8FA8"],
       rows:[
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
         "0 0 0 0 0 0 0 0 3 3 3 0 0 0 0 0 0 0 0 0 0",
@@ -482,30 +505,30 @@
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
       ]
     },
-    { // 小屋炊烟
+    { // 小屋炊烟（重画：门窗、烟囱、炊烟更清楚）
       name:"小屋炊烟",
-      palette:["#7FB069","#5A8F5A","#E8C15A","#F7EAD3","#E8736F","#B565A7","#A8DCF0","#8C7562"],
+      palette:["#A8E08A","#7FC47F","#F2D36A","#FFF6E2","#F2A0A0","#C9B8E0","#C8ECF8","#B99C74"],
       rows:[
         "6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6",
         "6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6",
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
-        "0 0 0 0 0 0 0 0 0 3 3 0 0 0 0 0 0 0 0 0 0",
-        "0 0 0 0 0 0 0 0 0 3 3 3 0 0 0 0 0 0 0 0 0",
-        "0 0 0 0 0 0 0 0 3 3 3 3 3 0 0 0 0 0 0 0 0",
-        "0 0 0 0 0 0 0 0 4 4 4 4 4 0 0 0 0 0 0 0 0",
-        "0 0 0 0 0 0 0 4 4 4 4 4 4 4 0 0 0 0 0 0 0",
-        "0 0 0 0 0 0 4 4 4 4 4 4 4 4 4 0 0 0 0 0 0",
-        "0 0 0 0 0 0 4 4 3 3 3 4 4 4 4 0 0 0 0 0 0",
-        "1 1 1 1 1 1 4 4 3 3 3 4 4 4 4 1 1 1 1 1 1",
-        "1 1 1 1 1 1 4 4 4 4 4 4 4 4 4 1 1 1 1 1 1",
+        "0 0 0 0 0 0 0 0 0 5 5 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 5 5 5 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 2 2 2 2 2 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 2 2 2 2 2 2 2 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0",
+        "0 0 0 0 0 2 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0",
+        "0 0 0 0 0 2 3 3 3 3 3 3 3 3 3 2 0 0 0 0 0",
+        "1 1 1 1 1 2 3 3 4 4 4 4 4 3 3 2 1 1 1 1 1",
+        "1 1 1 1 1 2 3 3 4 4 4 4 4 3 3 2 1 1 1 1 1",
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
         "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
       ]
     },
-    { // 月夜森林
+    { // 月夜森林（提亮：中亮蓝 + 明亮绿）
       name:"月夜森林",
-      palette:["#1B2A4A","#2E4468","#F2E2B8","#4A5F8A","#5A8F5A","#3E6B4A","#7C9BB5","#FFFFFF"],
+      palette:["#6FA8D8","#8FC4E8","#FFF0B8","#B7DCF2","#A8E08A","#7FC47F","#C8ECF8","#FFFFFF"],
       rows:[
         "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
         "0 0 0 0 0 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0",
@@ -529,14 +552,19 @@
   let entries = load();
   let viewYear  = new Date().getFullYear();
   let viewMonth = new Date().getMonth();
-  let viewMode  = "art";                 // "art" | "cat"
+  let viewMode  = "art";
   let listScope = "month";
   let ratioOpen = false;
+  let listOpen  = false;
+  let backupOpen = false;
   let pendingUndo = null;
 
   function load(){
     try{
-      const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("pixel_ledger_v2") || localStorage.getItem("pixel_ledger_v1");
+      const raw = localStorage.getItem(STORAGE_KEY)
+        || localStorage.getItem("pixel_ledger_v3")
+        || localStorage.getItem("pixel_ledger_v2")
+        || localStorage.getItem("pixel_ledger_v1");
       if(!raw) return [];
       const arr = JSON.parse(raw);
       return Array.isArray(arr) ? arr.filter(function(e){ return e && e.amount>0 && e.date; }) : [];
@@ -561,7 +589,6 @@
     return SCENES[Math.floor(x * SCENES.length) % SCENES.length];
   }
 
-  /* ---------- 分类下拉 + 图例 ---------- */
   const catSelect = document.getElementById("category");
   const legend = document.getElementById("legend");
   CATEGORIES.forEach(function(c){
@@ -579,7 +606,6 @@
     legend.appendChild(item);
   });
 
-  /* ---------- 记账 ---------- */
   const form     = document.getElementById("entryForm");
   const amountEl = document.getElementById("amount");
   const dateEl   = document.getElementById("date");
@@ -618,7 +644,6 @@
     render(date);
   });
 
-  /* ---------- 日历 ---------- */
   const daysEl   = document.getElementById("days");
   const calTitle = document.getElementById("calTitle");
   const modeBtn  = document.getElementById("modeBtn");
@@ -649,7 +674,6 @@
     return best;
   }
 
-  // 取画作中某日历格（3×3）的 9 个像素颜色
   function cellPixels(scene, cellRow, cellCol){
     const pixels = [];
     for(let r=0;r<3;r++){
@@ -687,23 +711,17 @@
     const totalRows = Math.ceil((startWeekday + dim) / 7);
     const totalCells = totalRows * 7;
 
-    // 已记账天数 → 解锁装饰格数量（每 7 天 1 个）
     const daySet = {};
     for(const ds in dayMap){ daySet[ds] = true; }
     const recordedDays = Object.keys(daySet).length;
-    const decoUnlocked = Math.min(
-      totalCells - dim,
-      Math.floor(recordedDays / 7)
-    );
+    const decoUnlocked = Math.min(totalCells - dim, Math.floor(recordedDays / 7));
 
-    // 前置空位（不在画作网格里）
     for(let i=0;i<startWeekday;i++){
       const d = document.createElement("div");
       d.className = "day empty";
       daysEl.appendChild(d);
     }
 
-    // 日期格
     for(let d=1; d<=dim; d++){
       const dateStr = ymd(viewYear, month, d);
       const slot = startWeekday + d - 1;
@@ -713,7 +731,6 @@
       const cell = document.createElement("div");
       cell.className = "day";
 
-      // 像素画面层
       const pix = document.createElement("div");
       pix.className = "pixgrid";
       const pixels = cellPixels(scene, cellRow, cellCol);
@@ -724,12 +741,10 @@
       });
       cell.appendChild(pix);
 
-      // 分类颜色层（切到分类视图时显示）
       const catfill = document.createElement("div");
       catfill.className = "catfill";
       cell.appendChild(catfill);
 
-      // 日期/金额标签
       const label = document.createElement("div");
       label.className = "label";
       const info = dayMap[dateStr];
@@ -756,7 +771,6 @@
       daysEl.appendChild(cell);
     }
 
-    // 装饰格（画作剩余部分）
     const filled = startWeekday + dim;
     let decoIndex = 0;
     for(let slot = filled; slot < totalCells; slot++){
@@ -788,7 +802,12 @@
       daysEl.appendChild(cell);
     }
 
-    // 分类视图切换
+    // 标记视图模式
+    Array.prototype.forEach.call(daysEl.children, function(cell){
+      if(cell.classList.contains("empty")) return;
+      if(viewMode === "art") cell.classList.add("art");
+      else cell.classList.add("cat");
+    });
     if(viewMode === "cat"){
       Array.prototype.forEach.call(daysEl.children, function(cell){
         if(!cell.classList.contains("empty")) cell.classList.add("catmode");
@@ -796,7 +815,6 @@
     }
     modeBtn.textContent = viewMode === "art" ? "分 类 视 图" : "拼 图 视 图";
 
-    // 拼图完成判定：所有日期格 + 装饰格都已点亮
     const allLit =
       Object.keys(daySet).length >= dim &&
       decoUnlocked >= (totalCells - dim);
@@ -809,18 +827,9 @@
     }
   }
 
-  /* ---------- 统计 ---------- */
   const sumTotal = document.getElementById("sumTotal");
   const sumDays  = document.getElementById("sumDays");
   const sumLit   = document.getElementById("sumLit");
-  const listEl   = document.getElementById("list");
-  const listTitle = document.getElementById("listTitle");
-  const scopeBtn = document.getElementById("scopeBtn");
-
-  scopeBtn.addEventListener("click", function(){
-    listScope = listScope === "month" ? "all" : "month";
-    render();
-  });
 
   function renderStats(){
     const month = viewMonth + 1;
@@ -848,7 +857,24 @@
     sumLit.textContent   = litCount + "/" + totalCells;
   }
 
-  /* ---------- 列表 ---------- */
+  /* 列表 */
+  const listEl   = document.getElementById("list");
+  const listTitle = document.getElementById("listTitle");
+  const scopeBtn = document.getElementById("scopeBtn");
+  const listWrap = document.getElementById("listWrap");
+  const listToggle = document.getElementById("listToggle");
+
+  scopeBtn.addEventListener("click", function(){
+    listScope = listScope === "month" ? "all" : "month";
+    render();
+  });
+  listToggle.addEventListener("click", function(){
+    listOpen = !listOpen;
+    listWrap.classList.toggle("open", listOpen);
+    listToggle.textContent = listOpen ? "收 起" : "展 开";
+    if(listOpen) renderList();
+  });
+
   function renderList(){
     const month = viewMonth + 1;
     const mk = monthKey(viewYear, month);
@@ -912,7 +938,7 @@
     });
   }
 
-  /* ---------- 占比 ---------- */
+  /* 占比 */
   const ratioBtn = document.getElementById("ratioBtn");
   const ratioEl  = document.getElementById("ratio");
 
@@ -973,7 +999,16 @@
     });
   }
 
-  /* ---------- 删除 + 撤销 ---------- */
+  /* 备份 */
+  const backupBtn = document.getElementById("backupBtn");
+  const backupWrap = document.getElementById("backupWrap");
+  backupBtn.addEventListener("click", function(){
+    backupOpen = !backupOpen;
+    backupWrap.classList.toggle("open", backupOpen);
+    backupBtn.textContent = backupOpen ? "收 起" : "展 开";
+  });
+
+  /* 删除 + 撤销 */
   const toast     = document.getElementById("toast");
   const toastText = document.getElementById("toastText");
   const undoBtn   = document.getElementById("undoBtn");
@@ -1008,7 +1043,7 @@
     render();
   });
 
-  /* ---------- 月份切换 ---------- */
+  /* 月份切换 */
   document.getElementById("prevBtn").addEventListener("click", function(){
     viewMonth--;
     if(viewMonth < 0){ viewMonth = 11; viewYear--; }
@@ -1020,7 +1055,7 @@
     render();
   });
 
-  /* ---------- 备份 ---------- */
+  /* 导出 / 导入 */
   document.getElementById("exportJson").addEventListener("click", function(){
     const t = new Date();
     const blob = new Blob([JSON.stringify(entries, null, 2)], {type:"application/json"});
@@ -1089,7 +1124,7 @@
   function render(flashDate){
     renderCalendar(flashDate || null);
     renderStats();
-    renderList();
+    if(listOpen) renderList();
     if(ratioOpen) renderRatio();
   }
 
