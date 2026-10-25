@@ -231,7 +231,7 @@
   .overlay{
     position:fixed;inset:0;background:rgba(58,39,22,.45);
     display:none;align-items:center;justify-content:center;
-    padding:16px;z-index:50;
+    padding:16px;z-index:999;isolation:isolate;
   }
   .overlay.open{display:flex;}
   .modal{
@@ -277,7 +277,7 @@
     box-shadow:4px 4px 0 rgba(0,0,0,.25);
     padding:12px 16px;
     display:none;align-items:center;gap:14px;
-    font-size:13px;z-index:60;max-width:92vw;
+    font-size:13px;z-index:1000;max-width:92vw;
   }
   .toast.show{display:flex;animation:toastIn .18s ease-out forwards;}
   @keyframes toastIn{to{transform:translateX(-50%) translateY(0);}}
@@ -311,7 +311,7 @@
   <p class="subtitle">每天记一笔，拼出一幅属于这个月的像素画</p>
 
   <div class="top-bar">
-    <button class="cta" id="openModal" type="button">＋ 记 一 笔</button>
+    <button class="cta" id="openModalBtn" type="button">＋ 记 一 笔</button>
     <span class="cta-note">记账 · 点亮格子 · 补全拼图</span>
   </div>
 
@@ -416,7 +416,6 @@
   const CAT_MAP = Object.fromEntries(CATEGORIES.map(c=>[c.key,c]));
   const STORAGE_KEY = "pixel_ledger_v2";
 
-  /* 每幅画 7 列 × 5 行色码矩阵（行数补足到 5，保证 31 天月份够用） */
   const ARTWORKS = [
     { name:"睡莲",
       palette:["#7C9BB5","#9BB8C9","#B7C9D6","#6F8FA8","#8FAFA0","#B7C9A8","#C9B8E0","#A8C6D8"],
@@ -457,9 +456,8 @@
   ];
 
   let entries = load();
-  const today = new Date();
-  let viewYear  = today.getFullYear();
-  let viewMonth = today.getMonth();
+  let viewYear  = new Date().getFullYear();
+  let viewMonth = new Date().getMonth();
   let viewMode  = "art";
   let listScope = "month";
   let ratioOpen = false;
@@ -492,7 +490,7 @@
   function artworkFor(year, month){
     const seed = year*100 + month;
     let x = Math.sin(seed) * 10000;
-    x = Math.abs(x - Math.floor(x));           // [0,1)
+    x = Math.abs(x - Math.floor(x));
     return ARTWORKS[Math.floor(x * ARTWORKS.length) % ARTWORKS.length];
   }
   function daysInMonth(y,m){ return new Date(y, m, 0).getDate(); }
@@ -504,8 +502,9 @@
     catSelect.appendChild(opt);
   });
 
+  /* ---------- 弹层（核心修复：按钮 id 与函数名分离） ---------- */
   const overlay   = document.getElementById("overlay");
-  const openBtn   = document.getElementById("openModal");
+  const openBtn   = document.getElementById("openModalBtn");
   const closeBtn  = document.getElementById("closeModal");
   const flashTip  = document.getElementById("flashTip");
   const form      = document.getElementById("entryForm");
@@ -522,15 +521,19 @@
   function openModal(){
     overlay.classList.add("open");
     flashTip.classList.remove("show");
-    setTimeout(()=>amountEl.focus(), 50);
+    setTimeout(function(){ amountEl.focus(); }, 50);
   }
   function closeModal(){
     overlay.classList.remove("open");
   }
+
   openBtn.addEventListener("click", openModal);
   closeBtn.addEventListener("click", closeModal);
   overlay.addEventListener("click", function(ev){
     if(ev.target === overlay) closeModal();
+  });
+  document.addEventListener("keydown", function(ev){
+    if(ev.key === "Escape" && overlay.classList.contains("open")) closeModal();
   });
 
   form.addEventListener("submit", function(ev){
@@ -545,8 +548,9 @@
     entries.push({ id: uid(), amount: Math.round(amount*100)/100, category, date, note });
     save();
 
-    const [y,m] = date.split("-").map(Number);
-    viewYear = y; viewMonth = m-1;
+    const parts = date.split("-");
+    viewYear = parseInt(parts[0],10);
+    viewMonth = parseInt(parts[1],10) - 1;
 
     form.reset();
     setDefaultDate();
@@ -620,8 +624,7 @@
       if(info && info.total > 0){
         cell.classList.add("lit");
         if(viewMode === "art"){
-          // 该日期在整个月历网格中的位置 → 映射到画作点阵
-          const slot = startWeekday + d - 1;     // 0-based 槽位
+          const slot = startWeekday + d - 1;
           const rowIdx = Math.floor(slot / 7);
           const colIdx = slot % 7;
           const gRow = art.grid[rowIdx] || art.grid[art.grid.length-1];
@@ -651,12 +654,11 @@
 
       if(dateStr === flashDate){
         cell.classList.add("flash");
-        setTimeout(()=>cell.classList.remove("flash"), 600);
+        setTimeout(function(){ cell.classList.remove("flash"); }, 600);
       }
       daysEl.appendChild(cell);
     }
 
-    // 月末补足的装饰格（参与点亮，显示画作边框色）
     const filled = startWeekday + dim;
     for(let slot = filled; slot < totalCells; slot++){
       const rowIdx = Math.floor(slot / 7);
@@ -719,7 +721,7 @@
       listTitle.textContent = "全部账目";
       scopeBtn.textContent = "只 看 本 月";
     }
-    list.sort((a,b)=> a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+    list.sort(function(a,b){ return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
 
     listEl.innerHTML = "";
     if(list.length === 0){
@@ -732,7 +734,7 @@
       return;
     }
 
-    list.forEach(e=>{
+    list.forEach(function(e){
       const cat = CAT_MAP[e.category] || CAT_MAP.other;
       const row = document.createElement("div");
       row.className = "row";
@@ -759,7 +761,7 @@
       del.type = "button";
       del.title = "删除这条记录";
       del.textContent = "×";
-      del.addEventListener("click", ()=> removeEntry(e));
+      del.addEventListener("click", function(){ removeEntry(e); });
 
       row.appendChild(tag);
       row.appendChild(note);
@@ -785,7 +787,7 @@
     const mk = monthKey(viewYear, month);
     const sums = {};
     let total = 0;
-    entries.forEach(e=>{
+    entries.forEach(function(e){
       if(!e.date.startsWith(mk)) return;
       sums[e.category] = (sums[e.category] || 0) + e.amount;
       total += e.amount;
@@ -800,7 +802,7 @@
       return;
     }
 
-    CATEGORIES.forEach(c=>{
+    CATEGORIES.forEach(function(c){
       const val = sums[c.key] || 0;
       if(val <= 0) return;
       const pct = Math.round(val / total * 100);
@@ -836,19 +838,19 @@
   let undoTimer  = null;
 
   function removeEntry(entry){
-    const idx = entries.findIndex(x=>x.id === entry.id);
+    const idx = entries.findIndex(function(x){ return x.id === entry.id; });
     if(idx < 0) return;
     entries.splice(idx,1);
     save();
     render();
 
-    pendingUndo = { entry, idx };
+    pendingUndo = { entry: entry, idx: idx };
     const catName = CAT_MAP[entry.category] ? CAT_MAP[entry.category].name : "";
     toastText.textContent = `已删除 ${catName} ${fmtMoney(entry.amount)}`;
     toast.classList.add("show");
 
     clearTimeout(undoTimer);
-    undoTimer = setTimeout(()=>{
+    undoTimer = setTimeout(function(){
       toast.classList.remove("show");
       pendingUndo = null;
     }, 5000);
@@ -856,7 +858,8 @@
 
   undoBtn.addEventListener("click", function(){
     if(!pendingUndo) return;
-    const { entry, idx } = pendingUndo;
+    const entry = pendingUndo.entry;
+    const idx = pendingUndo.idx;
     entries.splice(Math.min(idx, entries.length), 0, entry);
     save();
     pendingUndo = null;
@@ -879,19 +882,21 @@
   document.getElementById("exportJson").addEventListener("click", function(){
     const t = new Date();
     const blob = new Blob([JSON.stringify(entries, null, 2)], {type:"application/json"});
-    downloadBlob(blob, `pixel-ledger-${ymd(t.getFullYear(), t.getMonth()+1, t.getDate())}.json`);
+    downloadBlob(blob, "pixel-ledger-" + ymd(t.getFullYear(), t.getMonth()+1, t.getDate()) + ".json");
   });
 
   document.getElementById("exportCsv").addEventListener("click", function(){
     const rows = [["日期","分类","金额","备注"]];
-    entries.slice().sort((a,b)=> a.date < b.date ? -1 : 1).forEach(e=>{
+    entries.slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; }).forEach(function(e){
       const cat = CAT_MAP[e.category] ? CAT_MAP[e.category].name : e.category;
       rows.push([e.date, cat, e.amount, (e.note||"").replace(/"/g,'""')]);
     });
-    const csv = rows.map(r=> r.map(v=> `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+    const csv = rows.map(function(r){
+      return r.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(",");
+    }).join("\r\n");
     const blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8"});
     const t = new Date();
-    downloadBlob(blob, `pixel-ledger-${ymd(t.getFullYear(), t.getMonth()+1, t.getDate())}.csv`);
+    downloadBlob(blob, "pixel-ledger-" + ymd(t.getFullYear(), t.getMonth()+1, t.getDate()) + ".csv");
   });
 
   const fileInput = document.getElementById("fileInput");
@@ -906,14 +911,14 @@
       try{
         const arr = JSON.parse(String(reader.result));
         if(!Array.isArray(arr)) throw new Error("格式错误");
-        const clean = arr.filter(e=>
-          e && typeof e.amount === "number" && isFinite(e.amount) && e.amount > 0 &&
-          typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.date)
-        );
+        const clean = arr.filter(function(e){
+          return e && typeof e.amount === "number" && isFinite(e.amount) && e.amount > 0 &&
+                 typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.date);
+        });
         if(clean.length === 0){ alert("没有可导入的有效记录。"); return; }
-        if(!confirm(`将导入 ${clean.length} 条记录，并与现有数据合并。继续？`)) return;
-        const existingIds = new Set(entries.map(e=>e.id));
-        clean.forEach(e=>{
+        if(!confirm("将导入 " + clean.length + " 条记录，并与现有数据合并。继续？")) return;
+        const existingIds = new Set(entries.map(function(e){ return e.id; }));
+        clean.forEach(function(e){
           if(!e.id || existingIds.has(e.id)) e.id = uid();
           if(!CAT_MAP[e.category]) e.category = "other";
           entries.push(e);
@@ -936,7 +941,7 @@
     a.href = url; a.download = filename;
     document.body.appendChild(a);
     a.click();
-    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
   }
 
   function render(flashDate){
