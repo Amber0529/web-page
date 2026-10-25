@@ -56,7 +56,6 @@
   }
   .subtitle{color:var(--ink-soft);font-size:13px;margin:0 0 18px;letter-spacing:.5px;}
 
-  /* 顶部醒目记账入口 */
   .top-bar{
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     margin-bottom:22px;
@@ -97,7 +96,6 @@
     pointer-events:none;
   }
 
-  /* 统计：间距加大 */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
   .stat{
     background:#FFFBF2;
@@ -116,7 +114,6 @@
   }
   .stat .label{font-size:12px;color:var(--muted);}
 
-  /* 日历 */
   .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
   .cal-head h2{
     font-family:'Press Start 2P', monospace;
@@ -158,7 +155,6 @@
     color:#6E665A;
     transition:transform .06s, box-shadow .06s;
     overflow:hidden;
-    /* 未点亮：灰色斜纹 */
     background:
       repeating-linear-gradient(45deg,
         #C9C3B8 0 6px,
@@ -175,9 +171,10 @@
   }
   .day.lit .amt{font-size:9px;opacity:.9;}
   .day .amt{font-size:9px;line-height:1;}
-  .day .frame{ /* 装饰格标记 */
-    position:absolute;inset:0;
-    pointer-events:none;
+  .day.deco{
+    border-color:var(--line);
+    box-shadow:3px 3px 0 var(--line);
+    opacity:.85;
   }
   .day:hover:not(.empty){transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--line);}
   .day.flash{animation:flash .55s ease-out;}
@@ -186,7 +183,6 @@
     100%{filter:brightness(1);transform:scale(1);}
   }
 
-  /* 占比 */
   .section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
   .section-head h2{
     font-family:'Press Start 2P', monospace;
@@ -202,7 +198,6 @@
   .bar-fill{height:100%;border-right:2px solid rgba(90,68,51,.25);}
   .bar-row .val{text-align:right;color:var(--muted);font-size:11px;}
 
-  /* 列表 */
   .list{display:flex;flex-direction:column;gap:8px;}
   .row{
     display:grid;
@@ -230,11 +225,9 @@
   .row .del:hover{color:#9E3A33;}
   .empty-tip{color:var(--muted);font-size:13px;text-align:center;padding:18px 0;}
 
-  /* 备份 */
   .backup{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
   .backup .hint{font-size:12px;color:var(--muted);}
 
-  /* 弹层 */
   .overlay{
     position:fixed;inset:0;background:rgba(58,39,22,.45);
     display:none;align-items:center;justify-content:center;
@@ -277,7 +270,6 @@
   }
   .flash-tip.show{display:block;animation:pop .18s ease-out;}
 
-  /* 撤销 toast */
   .toast{
     position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
     background:var(--line);color:#FFF6E2;
@@ -323,7 +315,6 @@
     <span class="cta-note">记账 · 点亮格子 · 补全拼图</span>
   </div>
 
-  <!-- 统计 -->
   <section class="panel light">
     <div class="stats">
       <div class="stat"><span class="num" id="sumTotal">¥0</span><span class="label">本月总支出</span></div>
@@ -332,7 +323,6 @@
     </div>
   </section>
 
-  <!-- 日历 -->
   <section class="panel">
     <div class="cal-head">
       <h2 id="calTitle">2026 / 10</h2>
@@ -348,7 +338,6 @@
     <div class="days" id="days"></div>
   </section>
 
-  <!-- 分类占比 -->
   <section class="panel light">
     <div class="section-head">
       <h2>本月分类占比</h2>
@@ -357,7 +346,6 @@
     <div class="ratio" id="ratio"></div>
   </section>
 
-  <!-- 账目列表 -->
   <section class="panel light">
     <div class="section-head">
       <h2 id="listTitle">本月账目</h2>
@@ -366,7 +354,6 @@
     <div class="list" id="list"></div>
   </section>
 
-  <!-- 备份 -->
   <section class="panel light">
     <div class="section-head"><h2>数据备份</h2></div>
     <div class="backup">
@@ -380,7 +367,6 @@
 
 </div>
 
-<!-- 记账弹层 -->
 <div class="overlay" id="overlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <h2 id="modalTitle">＋ 记 一 笔</h2>
@@ -410,7 +396,6 @@
   </div>
 </div>
 
-<!-- 撤销 toast -->
 <div class="toast" id="toast">
   <span id="toastText">已删除</span>
   <button id="undoBtn" type="button">撤 销</button>
@@ -431,11 +416,9 @@
   const CAT_MAP = Object.fromEntries(CATEGORIES.map(c=>[c.key,c]));
   const STORAGE_KEY = "pixel_ledger_v2";
 
-  /* ---------- 像素画点阵（模拟画作氛围，非精确还原） ---------- */
-  // 每幅画是 7 列 × N 行的色块矩阵；颜色来自对应画作的调色板
+  /* 每幅画 7 列 × 5 行色码矩阵（行数补足到 5，保证 31 天月份够用） */
   const ARTWORKS = [
-    { // 《睡莲》氛围：蓝紫绿
-      name:"睡莲",
+    { name:"睡莲",
       palette:["#7C9BB5","#9BB8C9","#B7C9D6","#6F8FA8","#8FAFA0","#B7C9A8","#C9B8E0","#A8C6D8"],
       grid:[
         "0 1 2 3 2 1 0",
@@ -443,10 +426,8 @@
         "2 5 6 7 6 5 2",
         "3 2 7 6 7 2 3",
         "0 1 2 3 2 1 0"
-      ]
-    },
-    { // 《日出·印象》氛围：橙蓝
-      name:"日出",
+      ]},
+    { name:"日出",
       palette:["#F6C6A8","#F2A33C","#E8736F","#A8C6D8","#7C9BB5","#F58B6B","#F7EAD3","#C9B8E0"],
       grid:[
         "3 3 4 4 4 3 3",
@@ -454,10 +435,8 @@
         "1 5 0 0 0 5 1",
         "3 1 2 1 2 1 3",
         "4 3 3 3 3 3 4"
-      ]
-    },
-    { // 《麦田》氛围：金黄绿
-      name:"麦田",
+      ]},
+    { name:"麦田",
       palette:["#F2C14E","#E8A93C","#B8D9A0","#7FB069","#F7EAD3","#A8C6D8","#D8CFC4","#F6C6A8"],
       grid:[
         "4 4 0 0 0 4 4",
@@ -465,10 +444,8 @@
         "2 3 2 3 2 3 2",
         "3 2 3 2 3 2 3",
         "3 3 2 2 2 3 3"
-      ]
-    },
-    { // 《星夜》氛围：深蓝黄
-      name:"星夜",
+      ]},
+    { name:"星夜",
       palette:["#3E5C8A","#4F6FA8","#7C9BB5","#F2C14E","#F7EAD3","#2E4468","#A8C6D8","#C9B8E0"],
       grid:[
         "0 3 1 1 3 1 0",
@@ -476,20 +453,18 @@
         "1 1 3 0 1 3 1",
         "0 1 1 1 1 0 1",
         "1 0 1 3 1 1 0"
-      ]
-    }
+      ]}
   ];
 
   let entries = load();
   const today = new Date();
   let viewYear  = today.getFullYear();
-  let viewMonth = today.getMonth();       // 0-11
-  let viewMode  = "art";                  // "art" | "cat"
-  let listScope = "month";                // "month" | "all"
+  let viewMonth = today.getMonth();
+  let viewMode  = "art";
+  let listScope = "month";
   let ratioOpen = false;
   let pendingUndo = null;
 
-  /* ---------- 工具 ---------- */
   function load(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("pixel_ledger_v1");
@@ -514,17 +489,14 @@
   }
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
-  // 每月随机取一幅，同月固定
   function artworkFor(year, month){
-    let seed = year*100 + month;
+    const seed = year*100 + month;
     let x = Math.sin(seed) * 10000;
-    const idx = Math.floor((x - Math.floor(x)) * ARTWORKS.length) % ARTWORKS.length;
-    return ARTWORKS[idx];
+    x = Math.abs(x - Math.floor(x));           // [0,1)
+    return ARTWORKS[Math.floor(x * ARTWORKS.length) % ARTWORKS.length];
   }
-
   function daysInMonth(y,m){ return new Date(y, m, 0).getDate(); }
 
-  /* ---------- 分类下拉 ---------- */
   const catSelect = document.getElementById("category");
   CATEGORIES.forEach(c=>{
     const opt = document.createElement("option");
@@ -532,7 +504,6 @@
     catSelect.appendChild(opt);
   });
 
-  /* ---------- 弹层 ---------- */
   const overlay   = document.getElementById("overlay");
   const openBtn   = document.getElementById("openModal");
   const closeBtn  = document.getElementById("closeModal");
@@ -571,8 +542,7 @@
     const category = catSelect.value;
     const note = noteEl.value.trim();
 
-    const newEntry = { id: uid(), amount: Math.round(amount*100)/100, category, date, note };
-    entries.push(newEntry);
+    entries.push({ id: uid(), amount: Math.round(amount*100)/100, category, date, note });
     save();
 
     const [y,m] = date.split("-").map(Number);
@@ -584,10 +554,9 @@
     amountEl.focus();
 
     flashTip.classList.add("show");
-    render(true, date);
+    render(date);
   });
 
-  /* ---------- 日历渲染 ---------- */
   const daysEl  = document.getElementById("days");
   const calTitle = document.getElementById("calTitle");
   const modeBtn = document.getElementById("modeBtn");
@@ -597,7 +566,7 @@
     render();
   });
 
-  function buildDayMap(year, month /*1-12*/){
+  function buildDayMap(year, month){
     const mk = monthKey(year, month);
     const map = {};
     entries.forEach(e=>{
@@ -632,18 +601,15 @@
     const todayStr = ymd(now.getFullYear(), now.getMonth()+1, now.getDate());
 
     const art = artworkFor(viewYear, month);
-    const rows = Math.ceil(dim / 7);          // 4 或 5
-    const totalCells = rows * 7;              // 28 或 35
-    const extra = totalCells - dim;           // 装饰格数量
+    const rows = Math.ceil((startWeekday + dim) / 7);
+    const totalCells = rows * 7;
 
-    // 前置空格（按星期对齐）
     for(let i=0;i<startWeekday;i++){
       const d = document.createElement("div");
       d.className = "day empty";
       daysEl.appendChild(d);
     }
 
-    // 日期格
     for(let d=1; d<=dim; d++){
       const dateStr = ymd(viewYear, month, d);
       const cell = document.createElement("div");
@@ -654,11 +620,12 @@
       if(info && info.total > 0){
         cell.classList.add("lit");
         if(viewMode === "art"){
-          // 拼图：取该格在画作中的颜色
-          const rowIdx = Math.floor((startWeekday + d - 1) / 7);
-          const colIdx = (startWeekday + d - 1) % 7;
-          const g = art.grid[Math.min(rowIdx, art.grid.length-1)];
-          const code = g ? g.split(" ")[colIdx] : "0";
+          // 该日期在整个月历网格中的位置 → 映射到画作点阵
+          const slot = startWeekday + d - 1;     // 0-based 槽位
+          const rowIdx = Math.floor(slot / 7);
+          const colIdx = slot % 7;
+          const gRow = art.grid[rowIdx] || art.grid[art.grid.length-1];
+          const code = gRow ? gRow.split(" ")[colIdx] : "0";
           const color = art.palette[parseInt(code,10) % art.palette.length];
           cell.style.background = color;
         }else{
@@ -689,27 +656,28 @@
       daysEl.appendChild(cell);
     }
 
-    // 装饰格：参与点亮，显示画作边框/背景色
-    for(let i=0;i<extra;i++){
+    // 月末补足的装饰格（参与点亮，显示画作边框色）
+    const filled = startWeekday + dim;
+    for(let slot = filled; slot < totalCells; slot++){
+      const rowIdx = Math.floor(slot / 7);
+      const colIdx = slot % 7;
+      const gRow = art.grid[rowIdx] || art.grid[art.grid.length-1];
+      const code = gRow ? gRow.split(" ")[colIdx] : "0";
+      const color = art.palette[parseInt(code,10) % art.palette.length];
+
       const cell = document.createElement("div");
-      cell.className = "day";
-      const frameColor = art.palette[0];
-      cell.style.background = frameColor;
-      cell.style.borderColor = "var(--line)";
-      cell.style.boxShadow = "3px 3px 0 var(--line)";
-      cell.classList.add("lit");
-      cell.style.opacity = "0.85";
+      cell.className = "day lit deco";
+      cell.style.background = color;
+      cell.title = "装饰格 · 参与点亮";
       const mark = document.createElement("span");
-      mark.className = "frame";
       mark.textContent = "✦";
       mark.style.fontSize = "10px";
-      mark.style.opacity = ".6";
+      mark.style.opacity = ".65";
       cell.appendChild(mark);
       daysEl.appendChild(cell);
     }
   }
 
-  /* ---------- 统计 & 列表 ---------- */
   const sumTotal = document.getElementById("sumTotal");
   const sumDays  = document.getElementById("sumDays");
   const sumLit   = document.getElementById("sumLit");
@@ -802,7 +770,6 @@
     });
   }
 
-  /* ---------- 分类占比 ---------- */
   const ratioBtn = document.getElementById("ratioBtn");
   const ratioEl  = document.getElementById("ratio");
 
@@ -863,7 +830,6 @@
     });
   }
 
-  /* ---------- 删除 + 撤销 ---------- */
   const toast    = document.getElementById("toast");
   const toastText = document.getElementById("toastText");
   const undoBtn  = document.getElementById("undoBtn");
@@ -877,7 +843,8 @@
     render();
 
     pendingUndo = { entry, idx };
-    toastText.textContent = `已删除 ${CAT_MAP[entry.category] ? CAT_MAP[entry.category].name : ""} ${fmtMoney(entry.amount)}`;
+    const catName = CAT_MAP[entry.category] ? CAT_MAP[entry.category].name : "";
+    toastText.textContent = `已删除 ${catName} ${fmtMoney(entry.amount)}`;
     toast.classList.add("show");
 
     clearTimeout(undoTimer);
@@ -898,7 +865,6 @@
     render();
   });
 
-  /* ---------- 月份切换 ---------- */
   document.getElementById("prevBtn").addEventListener("click", function(){
     viewMonth--;
     if(viewMonth < 0){ viewMonth = 11; viewYear--; }
@@ -910,10 +876,10 @@
     render();
   });
 
-  /* ---------- 备份 ---------- */
   document.getElementById("exportJson").addEventListener("click", function(){
+    const t = new Date();
     const blob = new Blob([JSON.stringify(entries, null, 2)], {type:"application/json"});
-    downloadBlob(blob, `pixel-ledger-${ymd(today.getFullYear(), today.getMonth()+1, today.getDate())}.json`);
+    downloadBlob(blob, `pixel-ledger-${ymd(t.getFullYear(), t.getMonth()+1, t.getDate())}.json`);
   });
 
   document.getElementById("exportCsv").addEventListener("click", function(){
@@ -924,7 +890,8 @@
     });
     const csv = rows.map(r=> r.map(v=> `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n");
     const blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8"});
-    downloadBlob(blob, `pixel-ledger-${ymd(today.getFullYear(), today.getMonth()+1, today.getDate())}.csv`);
+    const t = new Date();
+    downloadBlob(blob, `pixel-ledger-${ymd(t.getFullYear(), t.getMonth()+1, t.getDate())}.csv`);
   });
 
   const fileInput = document.getElementById("fileInput");
@@ -939,7 +906,10 @@
       try{
         const arr = JSON.parse(String(reader.result));
         if(!Array.isArray(arr)) throw new Error("格式错误");
-        const clean = arr.filter(e=>e && typeof e.amount === "number" && e.amount > 0 && typeof e.date === "string");
+        const clean = arr.filter(e=>
+          e && typeof e.amount === "number" && isFinite(e.amount) && e.amount > 0 &&
+          typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.date)
+        );
         if(clean.length === 0){ alert("没有可导入的有效记录。"); return; }
         if(!confirm(`将导入 ${clean.length} 条记录，并与现有数据合并。继续？`)) return;
         const existingIds = new Set(entries.map(e=>e.id));
@@ -969,9 +939,8 @@
     setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
   }
 
-  /* ---------- 汇总渲染 ---------- */
-  function render(flash, flashDate){
-    renderCalendar(flash ? flashDate : null);
+  function render(flashDate){
+    renderCalendar(flashDate || null);
     renderStats();
     renderList();
     if(ratioOpen) renderRatio();
